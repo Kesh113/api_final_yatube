@@ -3,9 +3,10 @@ from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListCreateAPIView
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSetMixin
+from rest_framework.viewsets import (ModelViewSet, ReadOnlyModelViewSet,
+                                     ViewSetMixin)
 
-from posts.models import Post, Group, Follow, User
+from posts.models import Post, Group, Follow
 from .permissions import IsAuthor
 from .serializers import (PostSerializer, GroupSerializer,
                           CommentSerializer, FollowSerializer)
@@ -42,6 +43,12 @@ class CommentViewSet(ModelViewSet):
 
 
 class FollowViewSet(ViewSetMixin, ListCreateAPIView):
-    queryset = Follow.objects.all()
     serializer_class = FollowSerializer
-    filter_backends = (SearchFilter,)
+    filter_backends = SearchFilter,
+    search_fields = 'following__username',
+
+    def get_queryset(self):
+        return Follow.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

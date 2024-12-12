@@ -5,6 +5,7 @@ from rest_framework.validators import UniqueTogetherValidator
 
 
 from posts.models import Comment, Post, Group, Follow, User
+from .constants import ALREADY_SUBSCRIBED, SELF_SUBSCRIBE
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -41,10 +42,16 @@ class FollowSerializer(serializers.ModelSerializer):
     class Meta:
         model = Follow
         exclude = 'id',
-        validators = [
+        validators = (
             UniqueTogetherValidator(
                 queryset=Follow.objects.all(),
                 fields=['user', 'following'],
-                message='Вы уже подписаны'
-            )
-        ]
+                message=ALREADY_SUBSCRIBED
+            ),
+        )
+
+    def validate_following(self, value):
+        author = self.context['request'].user
+        if author == value:
+            raise serializers.ValidationError(SELF_SUBSCRIBE)
+        return value
