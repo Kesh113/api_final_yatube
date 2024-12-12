@@ -3,7 +3,6 @@ from rest_framework.fields import CurrentUserDefault
 from rest_framework.relations import SlugRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
-
 from posts.models import Comment, Post, Group, Follow, User
 from .constants import ALREADY_SUBSCRIBED, SELF_SUBSCRIBE
 
@@ -50,8 +49,7 @@ class FollowSerializer(serializers.ModelSerializer):
             ),
         )
 
-    def validate_following(self, value):
-        author = self.context['request'].user
-        if author == value:
+    def validate_following(self, following_user):
+        if self.context['request'].user == following_user:
             raise serializers.ValidationError(SELF_SUBSCRIBE)
-        return value
+        return following_user
